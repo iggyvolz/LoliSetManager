@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AsyncEnumerator" Version="2.2.2" />
+    <PackageReference Include="Parse.NETStandard2" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LoliSetManager\LoliSetManager.csproj" />
+  </ItemGroup>
+
+</Project>
