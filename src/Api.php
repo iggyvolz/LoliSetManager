@@ -13,14 +13,41 @@ class Api
             "auto_cache" => false
         ]);
     }
+    private static function getCollectionsDB():SleekDB
+    {
+        return SleekDB::store("collections", self::DATA_DIR,[
+            "auto_cache" => false
+        ]);
+    }
     private static function getLock():Lock
     {
         return new Lock(self::DATA_DIR."/lock");
     }
-    public function getItemSet(string $name, ?int $which=null):?array
+    public function getCollection(string $name):?array
+    {
+        self::getLock()->lockRead();
+        $collections = self::getCollectionsDB();
+        $collection = $collections->where("name", "=", $name)->orderBy("desc", "_id")->limit(1)->fetch();
+        if(empty($collection)) {
+            \http_response_code(404);
+            return null;
+        }
+        return $collection[0]["collection"];
+    }
+    public function getItemSet(string $name):?array
     {
         self::getLock()->lockRead();
         $sets = self::getSetsDB();
+        $expl = explode("/", $name);
+        if(count($expl) === 3 && preg_match("/^[0-9]+$", $expl[2])) {
+            $which = intval(array_pop($expl));
+            $name = implode("/", $name);
+        } elseif(count($expl) === 2) {
+            $which = null;
+        } else {
+            \http_response_code(404);
+            return null;
+        }
         $condition = $sets->where("name","=",$name);
         if(is_null($which)) {
             $condition = $condition->orderBy("desc", "_id")->limit(1);
@@ -39,9 +66,14 @@ class Api
         self::getLock()->lockWrite();
         $sets = self::getSetsDB();
         $sets->delete();
-        $sets->deleteAllCache();
+        $collections = self::getCollectionsDB();
+        $collections->delete();
         foreach((new ChampionGGSource())->getSets() as $name => $set) {
-            $set->save($sets, $name);
+            if($set instanceof Collection) {
+                $set->save($collections, $name);
+            } else {
+                $set->save($sets, $name);
+            }
         }
     }
 }

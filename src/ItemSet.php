@@ -2,11 +2,12 @@
 namespace iggyvolz\lolisetmanager;
 
 use SleekDB\SleekDB;
+use JsonSerializable;
 
 /**
  * https://web.archive.org/web/20170201032507/https://developer.riotgames.com/docs/item-sets
  */
-class ItemSet
+class ItemSet implements JsonSerializable
 {
     /**
      * The name of the item set as you would see it in the drop down.
@@ -59,5 +60,9 @@ class ItemSet
             "name" => $name,
             "set" => $set
         ]);
+    }
+    public function jsonSerialize()
+    {
+        return $this;
     }
 }
