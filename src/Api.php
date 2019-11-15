@@ -3,6 +3,7 @@ namespace iggyvolz\lolisetmanager;
 
 use SleekDB\SleekDB;
 use iggyvolz\lolisetmanager\Sources\ChampionGGSource;
+use iggyvolz\lolisetmanager\Sources\KoreanBuildsSource;
 
 class Api
 {
@@ -23,7 +24,7 @@ class Api
     {
         return new Lock(self::DATA_DIR."/lock");
     }
-    public function getCollection(string $name):?array
+    public static function getCollection(string $name):?array
     {
         self::getLock()->lockRead();
         $collections = self::getCollectionsDB();
@@ -34,7 +35,7 @@ class Api
         }
         return $collection[0]["collection"];
     }
-    public function getItemSet(string $name):?array
+    public static function getItemSet(string $name):?array
     {
         self::getLock()->lockRead();
         $sets = self::getSetsDB();
@@ -61,18 +62,24 @@ class Api
         }
         return $set[0]["set"];
     }
-    public function initialize():void
+    protected static function initialize():void
     {
         self::getLock()->lockWrite();
         $sets = self::getSetsDB();
         $sets->delete();
         $collections = self::getCollectionsDB();
         $collections->delete();
-        foreach((new ChampionGGSource())->getSets() as $name => $set) {
-            if($set instanceof Collection) {
-                $set->save($collections, $name);
-            } else {
-                $set->save($sets, $name);
+        $sources = [
+            // new ChampionGGSource(),
+            new KoreanBuildsSource(),
+        ];
+        foreach($sources as $source) {
+            foreach($source->getSets() as $name => $set) {
+                if($set instanceof Collection) {
+                    $set->save($collections, $name);
+                } else {
+                    $set->save($sets, $name);
+                }
             }
         }
     }
